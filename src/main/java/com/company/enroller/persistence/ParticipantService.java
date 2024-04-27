@@ -45,4 +45,33 @@ public class ParticipantService {
         transaction.commit();
     }
 
+    public void updatePassword(Participant participant, String newPassword) {
+        participant.setPassword(newPassword);
+        Transaction transaction = connector.getSession().beginTransaction();
+        connector.getSession().save(participant);
+        transaction.commit();
+    }
+
+    public Collection<Participant> sortByLogin(String sortOrder) {
+        String hql = "FROM Participant p ORDER BY p.login " + sortOrder;
+        Query query = connector.getSession().createQuery(hql);
+        return query.list();
+    }
+
+    public Collection<Participant> findByLoginKey(String key) {
+        String hql = "SELECT p FROM Participant p WHERE p.login like '%" + key + "%'";
+        Query query = connector.getSession().createQuery(hql);
+        return query.list();
+    }
+
+    public Collection<Participant> sortByLoginAndKey(String sortBy, String sortOrder, String key) {
+        String hql = "FROM Participant WHERE login LIKE :key";
+        if (sortBy.equals("login")){
+            hql += " ORDER by login " + sortOrder;
+        }
+        Query query = connector.getSession().createQuery(hql);
+        query.setParameter("key", "%" + key + "%");
+        return query.list();
+    }
+
 }
