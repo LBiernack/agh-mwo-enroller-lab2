@@ -1,7 +1,7 @@
 package com.company.enroller.persistence;
 
 import com.company.enroller.model.Meeting;
-import org.hibernate.Session;
+import com.company.enroller.model.Participant;
 import org.hibernate.Transaction;
 import org.hibernate.query.Query;
 import org.springframework.stereotype.Component;
@@ -10,12 +10,6 @@ import java.util.Collection;
 
 @Component("meetingService")
 public class MeetingService {
-
-//	Session session;
-//
-//	public MeetingService() {
-//		session = DatabaseConnector.getInstance().getSession();
-//	}
 
 	DatabaseConnector connector;
 
@@ -26,6 +20,13 @@ public class MeetingService {
 	public Collection<Meeting> getAll() {
 		String hql = "FROM Meeting";
 		Query query = connector.getSession().createQuery(hql);
+		return query.list();
+	}
+
+		public Collection<Meeting> get(String sortBy, String sortOrder, String key) {
+		String hql = "FROM Meeting WHERE " + sortBy + " LIKE :key ORDER by " + sortBy + " " + sortOrder;
+		Query query = connector.getSession().createQuery(hql);
+		query.setParameter("key", "%" + key + "%");
 		return query.list();
 	}
 
@@ -45,61 +46,33 @@ public class MeetingService {
 		transaction.commit();
 	}
 
-	public void updateTitle(Meeting meeting, String title){
-		meeting.setTitle(title);
+	public void update(Meeting meeting, Meeting updatedMeeting){
+		meeting.setTitle(updatedMeeting.getTitle());
+		meeting.setDescription(updatedMeeting.getDescription());
+		meeting.setDate(updatedMeeting.getDate());
 		Transaction transaction = connector.getSession().beginTransaction();
 		connector.getSession().save(meeting);
 		transaction.commit();
 	}
 
-	public void updateDescription(Meeting meeting, String description){
-		meeting.setDescription(description);
+	public Collection<Participant> getParticipants(Meeting meeting){
+		return meeting.getParticipants();
+	}
+
+	public Collection<Participant> addParticipants(Meeting meeting, Collection<Participant> participants) {
+		for (Participant participant : participants) {
+			meeting.addParticipant(participant);
+		}
+		Transaction transaction = connector.getSession().beginTransaction();
+		connector.getSession().save(meeting);
+		transaction.commit();
+		return meeting.getParticipants();
+	}
+
+	public void deleteParticipant(Meeting meeting, Participant participant) {
+		meeting.removeParticipant(participant);
 		Transaction transaction = connector.getSession().beginTransaction();
 		connector.getSession().save(meeting);
 		transaction.commit();
 	}
-
-	public void updateDate(Meeting meeting, String date){
-		meeting.setDate(date);
-		Transaction transaction = connector.getSession().beginTransaction();
-		connector.getSession().save(meeting);
-		transaction.commit();
-	}
-
-	public Collection<Meeting> sortByTitle(String sortOrder) {
-		String hql = "FROM Meeting m ORDER BY m.title " + sortOrder;
-		Query query = connector.getSession().createQuery(hql);
-		return query.list();
-	}
-
-	public Collection<Meeting> sortByDescription(String sortOrder) {
-		String hql = "FROM Meeting m ORDER BY m.description " + sortOrder;
-		Query query = connector.getSession().createQuery(hql);
-		return query.list();
-	}
-
-	public Collection<Meeting> sortByDate(String sortOrder) {
-		String hql = "FROM Meeting m ORDER BY m.date " + sortOrder;
-		Query query = connector.getSession().createQuery(hql);
-		return query.list();
-	}
-
-	public Collection<Meeting> findByKeyTitle(String key) {
-		String hql = "SELECT m FROM Meeting m WHERE m.title like '%" + key + "%'";
-		Query query = connector.getSession().createQuery(hql);
-		return query.list();
-	}
-
-	public Collection<Meeting> findByKeyDescription(String key) {
-		String hql = "SELECT m FROM Meeting m WHERE m.description like '%" + key + "%'";
-		Query query = connector.getSession().createQuery(hql);
-		return query.list();
-	}
-
-	public Collection<Meeting> findByKeyDate(String key) {
-		String hql = "SELECT m FROM Meeting m WHERE m.date like '%" + key + "%'";
-		Query query = connector.getSession().createQuery(hql);
-		return query.list();
-	}
-
 }
